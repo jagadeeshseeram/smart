@@ -3,7 +3,6 @@ import os
 import shutil
 import smtplib
 import time
-from email.mime.multipart import MIMEMultipart
 
 import cv2
 import numpy as np
@@ -72,39 +71,57 @@ def add_nominee():
             flash(r"Successfully registered a new nominee", 'primary')
     return render_template('nominee.html', admin=session['IsAdmin'])
 
+# Ensure uniqueness during registration
+def is_unique(field, value):
+    query = f"SELECT COUNT(*) FROM voters WHERE {field} = %s"
+    cur = mydb.cursor()
+    cur.execute(query, (value,))
+    count = cur.fetchone()[0]
+    cur.close()
+    return count == 0
+
 @app.route('/registration', methods=['GET', 'POST'])
 def registration():
-    if 'User' not in session:
-        flash('Please login first!', 'warning')
-        return redirect(url_for('login'))  # Ensure 'login' route exists!
-
     if request.method == 'POST':
         Fullname = request.form['Fullname']
         aadhar_id = request.form['aadhar_id']
         College_id = request.form['College_id']
-        email = request.form.get('email')  # Ensure email is provided
+        email = request.form['email']
 
-        if not email:  # If email is missing, show an error
-            flash('Email is required!', 'danger')
+        if not is_unique('aadhar_id', aadhar_id):
+            flash('Aadhaar number already registered.', 'danger')
             return redirect(url_for('registration'))
-
-        voters = pd.read_sql_query('SELECT * FROM voters', mydb)
-        if aadhar_id in voters['aadhar_id'].values:
-            flash('Already registered as a voter.', 'info')
-            return redirect(url_for('home'))
+        if not is_unique('College_id', College_id):
+            flash('College ID already registered.', 'danger')
+            return redirect(url_for('registration'))
+        if not is_unique('email', email):
+            flash('Email already registered.', 'danger')
+            return redirect(url_for('registration'))
 
         sql = "INSERT INTO voters (Fullname, aadhar_id, College_id, email, verified) VALUES (%s, %s, %s, %s, %s)"
         cur = mydb.cursor()
         cur.execute(sql, (Fullname, aadhar_id, College_id, email, 'no'))
         mydb.commit()
         cur.close()
-
         session['aadhar'] = aadhar_id
-        session['email'] = email  # Store email in session
-        session['status'] = 'no'
         flash("Voter registration successful!", "success")
-        return redirect(url_for('capture_images'))  # Skip OTP step
+        return redirect(url_for('capture_images'))
     return render_template('voter_reg.html')
+
+# Face Storage and Verification
+def save_face_data(aadhaar, face_list):
+    file_path = "faces_data.pkl"
+    try:
+        if os.path.exists(file_path):
+            with open(file_path, "rb") as f:
+                data = pickle.load(f)
+        else:
+            data = {}
+        data[aadhaar] = face_list  # Store face data with Aadhaar
+        with open(file_path, "wb") as f:
+            pickle.dump(data, f)
+    except Exception as e:
+        flash(f"Error saving face data: {str(e)}", "danger")
 
 
 
@@ -178,23 +195,6 @@ def capture_images():
     return render_template('capture.html')
 
 
-# Helper function to save face data
-def save_face_data(aadhaar, face_list):
-    file_path = "faces_data.pkl"
-    try:
-        if os.path.exists(file_path):
-            with open(file_path, "rb") as f:
-                data = pickle.load(f)
-        else:
-            data = {}
-
-        data[aadhaar] = face_list  # Store face data with Aadhaar
-
-        with open(file_path, "wb") as f:
-            pickle.dump(data, f)
-
-    except Exception as e:
-        flash(f"Error saving face data: {str(e)}", "danger")
 
 
 
@@ -226,34 +226,6 @@ def getImagesAndLabels(path):
     pickle.dump(le, output)
     output.close()
     return faces, Ids_new
-
-@app.route('/update')
-def update():
-    return render_template('update.html')
-@app.route('/updateback', methods=['POST','GET'])
-def updateback():
-    if request.method=='POST':
-        Fullname = request.form['Fullname']
-        aadhar_id = request.form['aadhar_id']
-        College_id = request.form['College_id']
-        email = request.form.get('email')  
-        voters=pd.read_sql_query('SELECT * FROM voters', mydb)
-        all_aadhar_ids=voters.aadhar_id.values
-        if age >= 18:
-            if (aadhar_id in all_aadhar_ids):
-                sql = "INSERT INTO voters (Fullname, aadhar_id, College_id, email, verified) VALUES (%s, %s, %s, %s, %s)"
-                cur = mydb.cursor()
-                cur.execute(sql, (Fullname, aadhar_id, College_id, email, 'no'))
-                mydb.commit()
-                cur.close()
-                session['aadhar']=aadhar_id
-                session['status']='no'
-                session['email']=email
-                flash(r'Database Updated Successfully','Primary')
-                return redirect(url_for('verify'))
-            else:
-                flash(f"Aadhar: {aadhar_id} doesn't exists in the database for updation", 'warning')
-    return render_template('update.html')
 
 def find_best_match(new_face):
     """Compares the new face with stored faces and returns the best match"""
@@ -349,14 +321,12 @@ import cv2
 import mediapipe as mp
 import numpy as np
 
-
 def detect_gesture():
-    """Detects hand gestures and maps them to candidates based on the number of raised fingers."""
     cap = cv2.VideoCapture(0)
-    hands = mp.solutions.hands.Hands(min_detection_confidence=0.8, min_tracking_confidence=0.5)
+    hands = mp.solutions.hands.Hands(min_detection_confidence=0.9, min_tracking_confidence=0.8)
     mp_draw = mp.solutions.drawing_utils
     
-    candidate_map = {1: "Party_1", 2: "Party_2", 3: "Party_3", 4: "Party_4", 5: "Party_5"}
+    candidate_map = {1: "Party_1", 2: "Party_2", 3: "BJP", 4: "Janasena", 5: "Party_5"}  # Updated map
     vote = None
     
     while True:
@@ -367,40 +337,29 @@ def detect_gesture():
         frame = cv2.flip(frame, 1)
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = hands.process(rgb_frame)
-        
+
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
                 mp_draw.draw_landmarks(frame, hand_landmarks, mp.solutions.hands.HAND_CONNECTIONS)
                 
-                # Identify raised fingers
-                fingers_up = []
-                finger_tips = [4, 8, 12, 16, 20]  # Thumb, Index, Middle, Ring, Pinky
-                finger_bottoms = [3, 6, 10, 14, 18]  # Bottom of fingers
+                # More accurate finger detection
+                fingers_up = sum([hand_landmarks.landmark[i].y < hand_landmarks.landmark[i-2].y for i in [8, 12, 16, 20]])
 
-                for tip, bottom in zip(finger_tips, finger_bottoms):
-                    if hand_landmarks.landmark[tip].y < hand_landmarks.landmark[bottom].y:
-                        fingers_up.append(1)
-                    else:
-                        fingers_up.append(0)
-
-                num_raised = sum(fingers_up)  # Count the raised fingers
-                
-                if num_raised in candidate_map:
-                    vote = candidate_map[num_raised]
+                if fingers_up in candidate_map:
+                    vote = candidate_map[fingers_up]
                     break
 
         cv2.imshow("Gesture Voting", frame)
-
         if vote:
-            print(f"Vote registered for {vote}")
+            print(f"Vote registered for {vote}")  # Debugging step
             break
-
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
     cap.release()
     cv2.destroyAllWindows()
     return vote
+
 
 @app.route('/select_candidate', methods=['POST', 'GET'])
 def select_candidate():
@@ -409,19 +368,7 @@ def select_candidate():
         flash("No Aadhaar detected. Please verify your face first.", "danger")
         return redirect(url_for('home'))
 
-    df_nom = pd.read_sql_query('SELECT * FROM nominee', mydb)
-    all_nom = df_nom['symbol_name'].values.tolist()
-
-    votes_db = pd.read_sql_query("SELECT aadhar FROM vote", mydb)
-    voted_aadhaars = votes_db['aadhar'].values.tolist()
-
-    if aadhar in voted_aadhaars:
-        flash("You have already voted.", "warning")
-        return redirect(url_for('home'))
-
-    vote = detect_gesture()  # Capture vote via gesture
-    print("Detected Vote:", vote)  # Debugging print
-
+    vote = detect_gesture()
     if not vote:
         flash("No gesture detected!", "danger")
         return redirect(url_for('select_candidate'))
@@ -432,16 +379,16 @@ def select_candidate():
         cur.execute(sql, (vote, aadhar))
         mydb.commit()
         cur.close()
-        flash(f"Voted Successfully via Gesture for {vote}!", 'success')
 
-        # Debugging: Check if vote is stored
-        result = pd.read_sql_query("SELECT * FROM vote", mydb)
-        print(result)  # Print votes stored in database
+        # Debugging: Fetch and print votes from database
+        votes_df = pd.read_sql_query("SELECT * FROM vote", mydb)
+        print("Votes in Database After Insert:", votes_df)  # Debugging step
+
+        flash(f"Voted Successfully via Gesture for {vote}!", 'success')
     except Exception as e:
         flash(f"Error storing vote: {str(e)}", "danger")
 
     return redirect(url_for('home'))
-
 
 
 
@@ -453,24 +400,25 @@ def voting_res():
             flash("No votes recorded yet!", "info")
             return render_template('voting_res.html', freq=[], noms=[])
 
-        # Debugging: Check retrieved votes
-        print("Votes Data:", votes)
+        # Debugging: Print retrieved votes
+        print("Retrieved Votes Data:", votes)
 
+        # Count votes correctly
         counts = votes['vote'].value_counts().reset_index()
         counts.columns = ['symbol_name', 'count']
 
-        all_imgs = ['1.png', '2.png', '3.jpg', '4.png', '5.png', '6.png']
-
         # Ensure index error is avoided
-        all_freqs = [counts[counts['symbol_name'] == i]['count'].values[0] if i in counts['symbol_name'].values else 0 for i in all_imgs]
-
         df_nom = pd.read_sql_query('SELECT * FROM nominee', mydb)
-        all_nom = df_nom['symbol_name'].values
+        all_nom = df_nom['symbol_name'].values.tolist()
 
-        return render_template('voting_res.html', freq=all_freqs, noms=all_nom)
+        print("Vote Count:", counts)  # Debugging step
+
+        return render_template('voting_res.html', freq=counts.to_dict(orient="records"), noms=all_nom)
+
     except Exception as e:
         flash(f"Error retrieving vote results: {str(e)}", "danger")
         return redirect(url_for('home'))
+
 
 
 
