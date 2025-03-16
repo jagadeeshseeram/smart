@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Online Voting System - Voter Registration</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+    <!-- Favicon -->
+    <link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon">
+
+    <!-- Google Fonts & Bootstrap -->
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+
+
+
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-6 col-md-8 col-sm-12">
+                <div class="card shadow-lg">
+                    <div class="card-header text-center bg-primary text-white">
+                        <h3>Voter Registration</h3>
+                    </div>
+                    <div class="card-body">
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <form action="{{ url_for('registration') }}" method="post">
+                            <div class="form-group">
+                                <input type="text" name="Fullname" class="form-control" required placeholder="Enter Full Name">
+                            </div>
+
+                            <div class="form-group">
+                                <input type="number" name="aadhar_id" class="form-control" required pattern="[0-9]{12}" title="Must contain exactly 12 numbers" minlength="12" maxlength="12" placeholder="Enter AADHAR Number">
+                            </div>
+
+                            <div class="form-group">
+                                <input type="text" name="College_id" class="form-control" required pattern="(?=.*[0-9])(?=.*[A-Z]).{8}" title="Must contain numbers and uppercase letters (8 characters)" placeholder="Enter College ID">
+                            </div>
+
+                            <div class="form-group">
+                                <input type="email" name="email" class="form-control" required placeholder="Enter Email ID">
+                            </div>
+
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary btn-block">Submit</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

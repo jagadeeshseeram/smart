@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Online Voting System - Select Candidate</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+    <!-- Favicon -->
+    <link href="static/img/favicon.ico" rel="icon">
+
+    <!-- CSS Libraries -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="static/lib/animate/animate.min.css" rel="stylesheet">
+    <link href="static/lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+    <link href="static/lib/lightbox/css/lightbox.min.css" rel="stylesheet">
+    <link href="static/css/style.css" rel="stylesheet">
+</head>
+
+<body style="background-image:url('static/img/flag.jpg'); background-size:cover;">
+
+<!-- Navbar Start -->
+<div class="navbar navbar-expand-lg bg-dark navbar-dark">
+    <div class="container-fluid">
+        <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbarCollapse">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-between" id="navbarCollapse">
+            <div class="navbar-nav ml-auto">
+                <a href="{{ url_for('home') }}" class="nav-item nav-link">Home</a>
+                <a href="{{ url_for('admin') }}" class="nav-item nav-link">Admin</a>
+                <a href="{{ url_for('voting') }}" class="nav-item nav-link">Vote</a>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Navbar End -->
+
+<style>
+    input[type=radio] + img {
+        cursor: pointer;
+    }
+
+    input[type="radio"]:checked + label {
+        outline: 2px solid #f00;
+    }
+</style>
+
+<center>
+    <div class="col-md-8">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+</center>
+
+<!-- Voting Section -->
+<div class="hero">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="hero-text">
+                    <center><h1 style="margin-left: 400px">Enter Your Vote</h1></center>
+                    <br>
+                    <div style="margin-left: 330px">
+                        {% if noms %}
+                        <form action="{{ url_for('select_candidate') }}" method="post">
+                            <center><h3 style="margin-left: 20px">Select Party Symbol</h3></center><br>
+                            <div class="row">
+                                {% for nom in noms %}
+                                    <label style="margin: 10px">
+                                        <input type="radio" name="test" value="{{ nom }}" required>
+                                        <img src="/static/logos/{{ nom }}" style="width:100px; height:100px">
+                                    </label>
+                                {% endfor %}
+                            </div>
+                            <div class="row" style="margin-left: 220px">
+                                <input class='btn btn-primary' type="submit" value="Vote">
+                            </div>
+                        </form>
+                        {% else %}
+                            <p>No candidates available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Back to Top -->
+<a href="#" class="back-to-top"><i class="fa fa-chevron-up"></i></a>
+
+<!-- JavaScript Libraries -->
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js"></script>
+<script src="static/lib/easing/easing.min.js"></script>
+<script src="static/lib/owlcarousel/owl.carousel.min.js"></script>
+<script src="static/lib/isotope/isotope.pkgd.min.js"></script>
+<script src="static/lib/lightbox/js/lightbox.min.js"></script>
+<script src="static/mail/jqBootstrapValidation.min.js"></script>
+<script src="static/mail/contact.js"></script>
+<script src="static/js/main.js"></script>
+
+</body>
+</html>
