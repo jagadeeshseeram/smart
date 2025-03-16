@@ -84,9 +84,9 @@ input[type="radio"]:checked + label {
                 <div class="row">
                     <div class="col-sm-12">
                         <div class="hero-text"><br><br><br>
-                                <center><h1 style="margin-left: 450px">Voting Results</h1></center>
+                                <center><h1 style="margin-left: 400px">Voting Results</h1></center>
                                 <br>
-                                <div style="margin-left: 400px">
+                                <div style="margin-left: 200px">
 <!--                                    <form action="/home" method="post">-->
                                         <div class="row">
                                             <label>
@@ -98,45 +98,7 @@ input[type="radio"]:checked + label {
 <!--                                                <input type="radio" name="test" value="1.png" checked>-->
                                                 <img src="/static/logos/1.png" style="width:100px; height:100px">
                                             </label>
-                                            <label style="margin-left:100px">
-                                                {% if '2.png' in noms %}
-                                                <p style="margin-left: 15px">Votes : {{ freq[1] }}</p>
-                                                {% else %}
-                                                <p style="margin-left: 15px">Votes : N/A</p>
-                                                {% endif %}
-<!--                                                <input type="radio" name="test" value="2.png" checked>-->
-                                                <img src="/static/logos/2.png" style="width:100px; height:100px">
-                                            </label>
-                                            <label style="margin-left:100px">
-                                                {% if '3.jpg' in noms %}
-                                                <p style="margin-left: 15px">Votes : {{ freq[2] }}</p>
-                                                {% else %}
-                                                <p style="margin-left: 15px">Votes : N/A</p>
-                                                {% endif %}
-<!--                                                <input type="radio" name="test" value="3.jpg" checked>-->
-                                                <img src="/static/logos/3.jpg" style="width:100px; height:100px">
-                                            </label>
-                                        </div> <br><br>
-                                        <div class="row">
-                                            <label>
-                                                {% if '4.png' in noms %}
-                                                <p style="margin-left: 15px">Votes : {{ freq[3] }}</p>
-                                                {% else %}
-                                                <p style="margin-left: 15px">Votes : N/A</p>
-                                                {% endif %}
-<!--                                                <input type="radio" name="test" value="4.png" checked>-->
-                                                <img src="/static/logos/4.png" style="width:100px; height:100px">
-                                            </label>
-                                            <label style="margin-left:100px">
-                                                {% if '5.png' in noms %}
-                                                <p style="margin-left: 15px" >Votes : {{ freq[4] }}</p>
-                                                {% else %}
-                                                <p style="margin-left: 15px" >Votes : N/A</p>
-                                                {% endif %}
-<!--                                                <input type="radio" name="test" value="5.png" checked>-->
-                                                <img src="/static/logos/5.png" style="width:100px; height:100px">
-                                            </label>
-                                            <label style="margin-left:100px">
+                                            <label style="margin-left:50px">
                                                 {% if '6.png' in noms %}
                                                 <p style="margin-left: 15px">Votes : {{ freq[5] }}</p>
                                                 {% else %}
@@ -147,7 +109,7 @@ input[type="radio"]:checked + label {
                                             </label>
                                         </div>
 
-                                        <div class="row" style="margin-left: 120px">
+                                        <div class="row" style="margin-left: 250px">
                                             <form action="{{url_for('home')}}">
                                             <input class='btn' type="submit" value="Back to Home"></form></div>
                                         </div>
